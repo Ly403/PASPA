@@ -1,0 +1,48 @@
+# @package _global_
+defaults:
+  - override /data: show_global_128_lmdb_talkshow_face
+  - _self_
+
+# Atomic TalkSHOW scale contract: 128 frames = 4 blocks x 32 frames.
+talkshow_profile:
+  name: block32_seq128
+  identity_contract: raw21_24_to_model0_3
+  raw_pid_min: 21
+  raw_pid_max: 24
+  model_pid_min: 0
+  model_pid_max: 3
+  seq_size: 128
+  block_size: 32
+  stride_size: 20
+name: paspa_talkshow_block32_seq128
+
+data:
+  pose_length: 128
+  train_batch_size: 72
+  train:
+    params:
+      lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_train_seq_size_128_stride_size_20_global.lmdb
+      expected_seq_size: 128
+  validation:
+    params:
+      lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_val_seq_size_128_stride_size_20_global.lmdb
+      expected_seq_size: 128
+  test:
+    params:
+      lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_test_seq_size_128_stride_size_20_global.lmdb
+      expected_seq_size: 128
+
+model:
+  speech_model:
+    params:
+      expected_pose_length: 128
+      expected_block_size: 32
+
+train:
+  teacher_forcing: true
+  num_frame_per_block: 32
+  independent_first_frame: false
+  finetune_speech_model: false
+  num_epochs: 1000
+  save_model_epochs: 10
+  check_eval_n_epochs: 5

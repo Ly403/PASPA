@@ -1,0 +1,75 @@
+defaults:
+    - _self_
+    - optimizer: adamw
+
+seed: 42
+restore_rng_state: True
+task: text2all
+num_epochs: 1000
+gradient_accumulation_steps: 1
+grad_checkpointing: false
+gradient_clip: 1.0
+gradient_clip_value: null
+optimizer_constructor:
+  target: diffusion.utils.optimizer.OptimizerConstructor
+  params:
+    nonhidden_names: null
+    optimizer_cfg: null
+    paramwise_cfg: null
+
+early_stop_hours: null
+early_stop_steps: null # 这个名字不合适，其实应该是max_steps
+
+eval: true # 需不需要进行验证
+check_eval_n_epochs: 25 # 每隔多少个epoch进行验证
+sanity_check_steps: 2
+visualize: True
+visualize_batch_size: 1
+visualize_sequence_with_face: False
+visualize_motion_with_face: False
+visualize_obj_nums: 1
+visualize_gt_video: False
+visualize_adding_noise: False
+visualize_intermediate: False
+visualize_model_output: False
+visualize_log_interval: 50
+
+train_first_stage_model: False
+train_audio_vae_model: False
+
+load_from_optimizer: False
+load_from_lr_scheduler: False
+resume_lr_scheduler: True
+lr: 0.0001
+lr_schedule: constant
+lr_schedule_args:
+  num_warmup_steps: 0
+
+null_embed_root: null
+
+log_interval: 20
+validation_log_interval: 5
+test_log_interval: 5
+debug_gradient_interval: -1 # 不进行gradient成分分析的debug，如果需要进行，则设置为大于0的整数
+debug_conflict_timestep_buckets: 0 # 冲突指标按timestep分桶统计；0表示关闭，>0表示桶数
+
+keep_last: True
+keep_last_n: 3
+keep_best_ckpt: True
+monitor_metric: "fgd"
+best_metric_mode: "min"
+save_model_epochs: 75
+save_model_steps: 100000000000
+online_metric: False
+eval_metric_step: 2000
+online_metric_dir: metric_helper
+normalize: False
+
+auto_lr: null
+
+use_fsdp: False
+
+skip_step: 0
+debug_nan: False
+ema_update: True
+ema_rate: 0.9999

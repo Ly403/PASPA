@@ -1,0 +1,7 @@
+evaluator:
+    download_path: /remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools/
+    audio_sr: ${data.audio_sr}
+    pose_fps: ${data.pose_fps}
+    fgd_feature_offload: False
+
+evaluator_type: distributed

@@ -1,0 +1,94 @@
+# SHOW data config for the TalkSHOW face-condition integration.
+#
+# The opt-in TalkSHOWLMDBDataset keeps the BEAT sample layout but additionally
+# requires strict JSON provenance, the correct split/PID mapping, full-clip
+# WavLM features, and a separate SHOW rest-joint table.  Legacy SHOW and BEAT
+# configs continue to use LMDBDataset directly.
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 256
+pose_fps: 30
+# TalkSHOW assets are intentionally resolved from environment variables instead
+# of inheriting any BEAT/developer-machine path.  The canonical TalkSHOW
+# launcher validates these variables before Hydra composes this config.
+data_path_1: ${oc.env:EMAGE_EVALTOOLS_DIR}
+joints: 55
+local: False
+readahead: False
+
+train:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_train_seq_size_256_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: train
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 256
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: ${data.readahead}
+
+validation:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_val_seq_size_256_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: val
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 256
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+test:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_test_seq_size_256_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: test
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 256
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+# predict split intentionally omitted — SHOW has no equivalent of BEATXOneDataSet.
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: diffusion.data.datasets.talkshow.TalkSHOWDistributedEvalSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+test_sampler:
+  target: diffusion.data.datasets.talkshow.TalkSHOWDistributedEvalSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: true
+
+ori_joints: beat_smplx_joints
+
+train_batch_size: 42
+# build_dataloader currently uses drop_last=true for every split.  Keep the
+# TalkSHOW evaluation batches at one so no genuine validation/test sample is
+# dropped; the dedicated eval sampler marks only its world-size padding.
+validation_batch_size: 1
+test_batch_size: 1
+predict_batch_size: 1
+num_workers: 8

@@ -1,0 +1,34 @@
+defaults:
+  - _self_
+  - /data: beat2
+  - /model: sana_caption # sana
+  - /vae: identity
+  - /text_encoder: clip-L-14 # gemma-2-2b-it
+  - /audio: identity
+  - /scheduler: flow_dpm-solver
+  - /train: train
+  - /metrics: emage
+
+# 控制是否要执行下面的过程
+_train: True
+_test: True
+_validation: True
+_predict: False
+
+trainer: omniflow
+work_dir: output
+resume_from: null
+load_from: null
+debug: False
+caching: False
+report_to: "tensorboard"
+tracker_project_name: "sana-baseline"
+name: "baseline"
+loss_report_name: "loss"
+model_growth: null
+
+hydra:
+  job:
+    chdir: True # 让 Hydra 先切一次，生成基础环境，我们再二次跳转
+  run:
+    dir: ${calc_work_dir:${resume_from}}

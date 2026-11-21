@@ -1,0 +1,11 @@
+# Install a CUDA-enabled PyTorch build suitable for the host before this file.
+librosa==0.10.1
+numpy==1.26.4
+python_speech_features==0.6
+scikit-learn==1.6.1
+scipy==1.14.1
+smplx==0.1.28
+TextGrid==1.6.1
+transformers==4.57.6
+tqdm==4.67.1
+yacs==0.1.8

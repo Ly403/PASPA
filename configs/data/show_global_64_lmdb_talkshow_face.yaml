@@ -1,0 +1,83 @@
+# SHOW data config for the 64-frame TalkSHOW face-condition profile.
+#
+# This is opt-in and does not replace the 256-frame TalkSHOW baseline or any
+# BEAT data config.  Its LMDB contract is 64 frames at the shared stride 20.
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 64
+pose_fps: 30
+data_path_1: ${oc.env:EMAGE_EVALTOOLS_DIR}
+joints: 55
+local: False
+readahead: False
+
+train:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_train_seq_size_64_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: train
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 64
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: ${data.readahead}
+
+validation:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_val_seq_size_64_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: val
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 64
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+test:
+  target: diffusion.data.datasets.talkshow.TalkSHOWLMDBDataset
+  params:
+    lmdb_path: ${oc.env:SHOW_LMDB_DIR}/show_test_seq_size_64_stride_size_20_global.lmdb
+    rest_joint_position_path: ${oc.env:SHOW_REST_JOINT_PATH}
+    expected_split: test
+    expected_pids: [21, 22, 23, 24]
+    expected_pid_offset: 1
+    model_pid_offset: 21
+    expected_seq_size: 64
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: diffusion.data.datasets.talkshow.TalkSHOWDistributedEvalSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+test_sampler:
+  target: diffusion.data.datasets.talkshow.TalkSHOWDistributedEvalSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: true
+ori_joints: beat_smplx_joints
+
+train_batch_size: 32
+validation_batch_size: 1
+test_batch_size: 1
+predict_batch_size: 1
+num_workers: 8

@@ -1,0 +1,21 @@
+vocoder_name: "hifigan"
+
+audio_vae:
+  target: diffusion.model.vae.ae_model_zoo.IdentityAutoEncoder
+
+audio_vocoder:
+  vocoder_name: ${audio.vocoder_name}
+  local: null 
+
+mel_spec:
+  n_fft: 1024
+  hop_length: 256
+  win_length: 1024
+  n_mel_channels: 80
+  target_sample_rate: ${data.audio_sr}
+  mel_spec_type: ${audio.vocoder_name}
+
+audio_encoder: 
+  name: wavlm
+  local_model_path: /remote-home/liuyi/Sana/tools/wavlm-libri-clean-100h-large
+  quantization: false

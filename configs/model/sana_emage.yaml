@@ -1,0 +1,93 @@
+model:
+  target: diffusion.model.nets.sana_emage.SanaEmage
+  params:
+    motion_in_channels: 333
+    expression_in_channels: 100
+    hidden_size: 384
+    caption_channels: 1024
+    mapping_size: 384
+    depth: 6
+    drop_path: 0.0
+    inputlayer_config:
+      target: diffusion.model.nets.basic_modules.InputLayer
+      params:
+        bias: true
+        norm_type: rms
+        proj_type: linear
+        norm_eps: 1e-6
+    timestep_embedder_config:
+      target: diffusion.model.nets.basic_modules.MPFourierTimeEmbedding
+      params:
+        num_embedding_channels: 768
+        bias: true
+    caption_embedder_config:
+      target: diffusion.model.nets.basic_modules.CaptionEmbedder
+      params:
+        y_proj_type: mlp
+        act_type: gelu
+        y_norm_type: rms
+        bias: true
+        droput: 0.0
+        norm_eps: 1e-6
+    block_config:
+      target: diffusion.model.nets.sana_emage.SanaEmageBlock
+      params:
+        num_heads: 8
+        head_dim: null
+        simple_modulation: false
+        bias: true
+        norm_type: rms
+        attn_type: null
+        qk_norm_type: identity
+        cross_attn_type: null
+        cross_qk_norm_type: identity
+        ffn_type: mlp
+        ffn_act_type: gelu
+        ffn_proj_type: linear
+        ffn_mlp_ratio: 2.0
+        attn_drop: 0.0
+        attn_proj_drop: 0.0
+        cross_attn_drop: 0.0
+        cross_attn_proj_drop: 0.0
+        ffn_drop: 0.0
+        drop_path: 0.0
+        norm_eps: 1e-6
+    finallayer_config:
+      target: diffusion.model.nets.basic_modules.FinalLayer
+      params:
+        bias: true
+        norm_type: rms
+        proj_type: linear
+        simple_modulation: false
+        norm_eps: 1e-6
+    work_dir: ${work_dir}
+    use_pe: true
+    pos_embed_type: sincos
+    pe_max_length: 10000
+    simple_modulation: false
+
+
+speech_model_ckpt_path: /remote-home/liuyi/Sana/tools/best.pt
+speech_model:
+  target: diffusion.model.nets.basic_modules.SimpleSpeechModel
+  params:
+    feature_dim: 512
+    output_feat_dim: 100
+    num_person: 31
+
+
+model_wrapper:
+  target: diffusion.model.denoiser.wrapper.DenoiserWrapper
+
+guider:
+  guider_type: identity
+  ucg_prob: 0.0
+  cfg_motion_scale: 7.5
+  cfg_schedule_type: constant
+  cfg_schedule_kwargs: {}
+
+resume_from: null
+load_from: null
+autocast_linear_attn: false
+fp32_attention: true
+mixed_precision: 'no'

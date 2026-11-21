@@ -1,0 +1,11 @@
+target: diffusion.utils.optimizers.muon.MuonWithAuxAdam
+params:
+    adam_groups:
+        use_muon: False
+        betas: [0.9, 0.999]
+        lr: ${train.lr}
+        weight_decay: 0.0
+    muon_group:
+        use_muon: True
+        lr: 0.05 # 这个比较麻烦，JK的这个实现muon的学习率必须调的比较高
+        momentum: 0.95

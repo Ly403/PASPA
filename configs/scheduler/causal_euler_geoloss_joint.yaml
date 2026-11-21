@@ -1,0 +1,101 @@
+train_sampling_steps: 1000
+schedule_type: emage
+scheduler:
+  prediction_type: xstart
+  noise_schedule: linear_flow
+  loss_type: emage
+  pred_sigma: False
+  learn_sigma: False
+  flow_shift: 1.0
+  task: ${train.task}
+  lambda_motion: 1.0
+  lambda_expression: 0.0
+  vae2_path: /remote-home/liuyi/Sana/tools/MaskedVAE2-HorizonFlip/best.pt
+  vae3_path: /remote-home/liuyi/Sana/tools/MaskedVAE3-HorizonFlip/best.pt
+  logvar_clamp_min: -10.0    # logvar 最小值，防止权重爆炸
+  logvar_clamp_max: 10.0     # logvar 最大值，防止权重消失
+  geometric_loss_logvar_mode: "full"  # 几何损失的logvar模式: "full", "detach", "none"
+  other_lambdas:
+    lambda_translation: 1.0
+    lambda_rotation: 0.001
+    lambda_latent_loss: 0.2
+    lambda_vel_rcxyz: 1.0
+    lambda_acc_rcxyz: 1.0
+    lambda_rcxyz: 1.0
+    lambda_motion_prompt: 0.0
+    lambda_trans_prompt: 0.0
+    lambda_struct_loss: 1.0
+    lambda_vel_trans: 0.0
+    lambda_acc_trans: 0.0
+    lambda_block_boundary: 0.0
+    lambda_block_boundary_vel: 1.0
+    lambda_block_boundary_acc: 1.0
+
+use_trans_for_fk: True
+overlap_length: 8
+noise_shuffle: false
+noise_shuffle_window: 8
+
+# Overlap decode (inference-time block boundary smoothing via overlapping generation)
+overlap_decode:
+  enabled: false
+  overlap_frames: 8        # O: number of overlapping frames between consecutive blocks
+  blend_mode: linear        # linear | cosine
+
+# logit-normal timestep
+weighting_scheme: logit_normal
+logit_mean: 0.0
+logit_std: 1.0
+
+# blockwise timestep monotonicity (soft/annealed)
+monotonic_blocks: true
+weak_monotonic_enable: false
+weak_monotonic_mode: bounded_drop   # options: mix_cummax | bounded_drop
+weak_monotonic_strength_init: 1.0
+weak_monotonic_strength_min: 0.3
+weak_monotonic_strength_schedule: cosine  # cosine | linear
+weak_monotonic_warmup_steps: 20000
+weak_monotonic_anneal_end_steps: 200000
+weak_monotonic_delta_max: 700     # only used when weak_monotonic_mode=bounded_drop
+
+# Optional: weak-constrained same-level timestep sampling for BLD.
+# base_t + delta_t per block, where delta_t is sampled from a small-range distribution.
+# Backward-compatible defaults (disabled): no effect on original behavior.
+local_jitter_timestep:
+  enabled: false
+  distribution: uniform      # uniform | normal
+  delta_max: 0               # max absolute jitter; 0 means equivalent to uniform_timestep per block-level
+  delta_std: 0.0             # used when distribution=normal
+  anchor_first_block_to_base: false
+  allow_with_monotonic: false
+  sort_blocks: false
+
+self_sampling:
+  enabled: false
+  warmup_steps: 50000
+  shift: 0.7
+  use_ema: true
+  ema_update_interval: 5
+  ema_rate: 0.999
+
+# Optional: block-level supervision shaping for BLD training.
+# Backward-compatible defaults (disabled): no effect on original behavior.
+block_supervision:
+  enabled: false
+  mode: uniform        # uniform | tail_k | custom | random_k
+  tail_k: 1            # used by mode=tail_k
+  head_weight: 1.0     # used by mode=tail_k
+  tail_weight: 1.0     # used by mode=tail_k
+  custom_weights: []   # used by mode=custom, length must equal #blocks
+  random_k: 1          # used by mode=random_k
+  random_scope: global # used by mode=random_k, options: global | per_sample
+  random_on_weight: 1.0
+  random_off_weight: 0.0
+  normalize: none      # none | mean1
+
+sampler:
+  target: diffusion.sampler.flow_euler_sampler.EmageFlowEulerSampler
+  params:
+    steps: 10
+    task: ${train.task}
+    prediction_type: ${scheduler.scheduler.prediction_type}

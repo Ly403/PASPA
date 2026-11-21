@@ -1,0 +1,73 @@
+# SHOW (TalkSHOW) dataset config, mirrors beatx_global_256_lmdb.yaml.
+# LMDBs are produced by `scripts/create_lmdb_show.py` and live next to the BEAT2
+# LMDBs under /root/tmp/ (with a `show_` prefix to distinguish them).
+#
+# Reuses the existing BEATXDataset.LMDBDataset class verbatim — the SHOW ETL
+# emits the same 9-field record contract, so dataset code is unchanged.
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 256
+pose_fps: 30
+data_path_1: "/remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools"
+joints: 55
+local: False
+readahead: False
+
+train:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/show_train_seq_size_256_stride_size_20_global.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: ${data.readahead}
+
+validation:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/show_val_seq_size_256_stride_size_20_global.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+test:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/show_test_seq_size_256_stride_size_20_global.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+# predict split intentionally omitted — SHOW has no equivalent of BEATXOneDataSet.
+# When you need single-clip inference for SHOW, write a thin OneDataSet variant
+# pointing at a single SHOW pkl/wav pair, then add it back here.
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+test_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: true
+
+# motion config
+ori_joints: beat_smplx_joints
+
+train_batch_size: 42
+validation_batch_size: 24
+test_batch_size: 1
+predict_batch_size: 1
+num_workers: 8

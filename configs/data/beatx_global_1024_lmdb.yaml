@@ -1,0 +1,87 @@
+# 这些是受到create_h5.py的影响，手动填入，要和h5文件对应的配置参数一致
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 1024
+pose_fps: 30
+data_path_1: "/remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools"
+joints: 55
+local: False
+readahead: False
+
+train:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/train/train_seq_size_1024_stride_size_20_global.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: ${data.readahead}
+
+validation:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/test/test_seq_size_60_stride_size_20_global_ids_2.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+test:
+  target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+  params:
+    lmdb_path: /root/tmp/test/test_seq_size_60_stride_size_20_global_ids_2.lmdb
+    rotation_method: axisangle
+    use_symmetry_aug: false
+    readahead: True
+
+predict:
+  target: diffusion.data.datasets.beat2.BEATXOneDataSet.OneDataSet
+  params:
+    smplx_data_path: /remote-home/share/dmb_nas2/liuyi/BEAT2/beat_english_v2.0.0/smplxflame_30/2_scott_0_1_1.npz
+    audio_path: /remote-home/share/dmb_nas2/liuyi/BEAT2/beat_english_v2.0.0/wave16k/2_scott_0_1_1.wav
+    rotation_method: axisangle
+    local: false
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+test_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+predict_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: False
+
+# train_sampler:
+#   params:
+#     drop_last: False
+
+# validation_sampler:
+#   params:
+#     drop_last: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: true
+# sort_dataset: false
+
+# motion config
+ori_joints: beat_smplx_joints
+
+train_batch_size: 42
+validation_batch_size: 24
+test_batch_size: 1
+predict_batch_size: 1
+num_workers: 8

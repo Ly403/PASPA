@@ -1,0 +1,152 @@
+model:
+  target: diffusion.model.nets.causal.causal_emage.CausalEmage
+  # Opt-in SHOW variant using the WavLM Large face head trained under
+  # reproductions/talkshow.  The legacy SHOW/SimpleSpeechModel config remains
+  # available as show_causal_emage_deltanet.yaml.
+  params:
+    expression_in_channels: 100
+    # TalkSHOW is trained independently from BEAT.  Both the diffusion
+    # backbone and face condition therefore share the same local IDs 0..3.
+    num_person: 4
+    hidden_size: 384
+    caption_channels: 1024
+    depth: 6
+    drop_path: 0.0
+    is_teacher_forcing: True
+    mapping_size: 768
+    inputlayer_config:
+      target: diffusion.model.nets.basic_modules.InputLayer
+      params:
+        bias: true
+        norm_type: ${model.norm1_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    fuse_inputlayer_config:
+      target: diffusion.model.nets.basic_modules.InputLayer
+      params:
+        bias: true
+        norm_type: ${model.norm1_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    timestep_embedder_config:
+      target: diffusion.model.nets.basic_modules.MPFourierTimeEmbedding
+      params:
+        num_embedding_channels: 768
+        bias: true
+    caption_embedder_config:
+      target: diffusion.model.nets.basic_modules.CaptionEmbedder
+      params:
+        y_proj_type: mlp
+        act_type: gelu
+        y_norm_type: ${model.norm1_type}
+        bias: true
+        dropout: 0.0
+        norm_eps: 1e-6
+    block_config:
+      target: diffusion.model.nets.causal.causal_emage.CausalEmageBlockDeltaNet
+      params:
+        num_heads: 8
+        head_dim: null
+        simple_modulation: ${model.simple_modulation}
+        bias: true
+        norm_type: ${model.norm2_type}
+        attn_type: flash
+        qk_norm_type: ${model.norm1_type}
+        ffn_type: mlp
+        ffn_act_type: gelu
+        ffn_proj_type: linear
+        ffn_mlp_ratio: 4.0
+        attn_drop: 0.0
+        attn_proj_drop: 0.0
+        ffn_drop: 0.0
+        drop_path: 0.0
+        norm_eps: 1e-6
+        is_teacher_forcing: ${model.model.params.is_teacher_forcing}
+        local_attn_size: ${model.local_attn_size}
+        max_attention_size: ${model.max_attention_size}
+        sink_size: ${model.sink_size}
+        num_frame_per_block: ${train.num_frame_per_block}
+        deltanet_gate_low_rank_dim: -1
+        deltanet_gate_logit_normalizer: 1.0
+        deltanet_allow_neg_eigval: false
+        deltanet_use_short_conv: false
+        deltanet_conv_size: 4
+        deltanet_use_triton_kernel: false
+        deltanet_scale: null
+        deltanet_q_t_modulation_mode: none
+        deltanet_q_t_modulation_dim: ${model.model.params.mapping_size}
+    finallayer_config:
+      target: diffusion.model.nets.causal.causal_block.FinalLayer
+      params:
+        bias: true
+        norm_type: ${model.norm2_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    work_dir: ${work_dir}
+    use_pe: true
+    pos_embed_type: rope
+    pe_max_length: 10000
+    simple_modulation: ${model.simple_modulation}
+    num_frame_per_block: ${train.num_frame_per_block}
+    independent_first_frame: ${train.independent_first_frame}
+    zero_history_context_enabled: false
+    zero_history_context_mode: post_encoder
+
+cross_attn_type: deltanet
+max_attention_size: 256
+local_attn_size: 256
+simple_modulation: false
+sink_size: 0
+norm1_type: rms
+norm2_type: rms
+
+model_wrapper:
+  target: diffusion.model.denoiser.wrapper.DenoiserWrapper
+
+# This must be the ckpt-*.pth emitted by reproductions/talkshow/train_face.sh.
+# Use an absolute path because Hydra changes the process working directory.
+speech_model_ckpt_path: ${oc.env:TALKSHOW_FACE_CKPT}
+speech_model:
+  target: diffusion.model.audio_encoder.talkshow_face.TalkSHOWFaceConditionModel
+  params:
+    input_feature_dim: 1024
+    hidden_dim: 256
+    output_feat_dim: 100
+    jaw_dim: 3
+    num_person: 4
+    # TalkSHOWLMDBDataset converts raw LMDB/rest IDs 21..24 to the network
+    # identity space 0..3 before either network consumes them.
+    speaker_id_offset: 0
+    expected_lmdb_pid_offset: 1
+    expected_speaker_ids:
+      oliver: 21
+      chemistry: 22
+      seth: 23
+      conan: 24
+    identity_dim: 64
+    wavlm_model_path: ${oc.env:WAVLM_DIR}
+    require_audio_contract: true
+    required_face_loss: corrected
+    # TalkSHOW scale profiles override these two fields atomically with the
+    # data sequence length and BLD block size.
+    expected_pose_length: 256
+    expected_block_size: 64
+
+# TalkSHOW face training encodes each complete utterance before temporal
+# interpolation.  Use the matching opt-in inference path; BEAT configs omit
+# this key and therefore retain the legacy block-local audio encoding.
+inference_audio_feature_scope: full_clip
+
+guider:
+  guider_type: identity
+  ucg_prob: 0.0
+  cfg_audio_scale: 0.0
+  cfg_history_scale: 0.0
+  cfg_schedule_type: constant
+  cfg_schedule_kwargs: {}
+
+resume_from: null
+load_from: null
+autocast_linear_attn: false
+fp32_attention: true
+mixed_precision: 'no'

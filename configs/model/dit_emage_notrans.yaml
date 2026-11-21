@@ -1,0 +1,31 @@
+model:
+  target: diffusion.model.nets.dit.DiffusionDITNetPartsFixedExpressions2PostNormNotrans
+  params:
+    hidden_size: 384
+    num_layers: 6
+    num_person: 31
+
+model_wrapper:
+  target: diffusion.model.denoiser.wrapper.DenoiserWrapper
+
+speech_model_ckpt_path: /remote-home/liuyi/Sana/tools/best.pt
+speech_model:
+  target: diffusion.model.nets.basic_modules.SimpleSpeechModel
+  params:
+    feature_dim: 512
+    output_feat_dim: 100
+    num_person: 31
+
+
+guider:
+  guider_type: identity
+  ucg_prob: 0.0
+  cfg_motion_scale: 7.5
+  cfg_schedule_type: constant
+  cfg_schedule_kwargs: {}
+
+resume_from: null
+load_from: null
+autocast_linear_attn: false
+fp32_attention: true
+mixed_precision: 'no'

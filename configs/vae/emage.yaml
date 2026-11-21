@@ -1,0 +1,4 @@
+target: diffusion.model.vae.models.new_emage.new_emage_vqvae.EmageVQModel
+params:
+  pretrained_path: "/remote-home/liuyi/Sana/tools/EMAGE/pretrained_vqvae"
+  

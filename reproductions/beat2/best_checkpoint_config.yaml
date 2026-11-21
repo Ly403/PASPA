@@ -1,0 +1,432 @@
+_train: true
+_test: true
+_validation: true
+_predict: false
+trainer: bld
+work_dir: output
+resume_from: null
+load_from: null
+debug: false
+caching: false
+report_to: tensorboard
+tracker_project_name: sana-baseline
+name: causal_geoloss_emage_local8_mono_logvar_detach_cross_first_naive
+loss_report_name: loss
+model_growth: null
+data:
+  audio_sr: 16000
+  audio_fps: 16000
+  pose_length: 256
+  pose_fps: 30
+  data_path_1: /mnt/disk4T/ly/Sana/tools/EMAGE/emage_evaltools/
+  joints: 55
+  local: false
+  readahead: false
+  train:
+    target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+    params:
+      lmdb_path: /mnt/disk4T/ly/Sana/.cache/train_seq_size_256_stride_size_20_global.lmdb
+      rotation_method: axisangle
+      use_symmetry_aug: false
+      readahead: ${data.readahead}
+  validation:
+    target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+    params:
+      lmdb_path: /mnt/disk4T/ly/Sana/.cache/test_seq_size_256_stride_size_20_global_ids_2.lmdb
+      rotation_method: axisangle
+      use_symmetry_aug: false
+      readahead: true
+  test:
+    target: diffusion.data.datasets.beat2.BEATXDataset.LMDBDataset
+    params:
+      lmdb_path: /mnt/disk4T/ly/Sana/.cache/test_seq_size_256_stride_size_20_global_ids_2.lmdb
+      rotation_method: axisangle
+      use_symmetry_aug: false
+      readahead: true
+  predict:
+    target: diffusion.data.datasets.beat2.BEATXOneDataSet.OneDataSet
+    params:
+      smplx_data_path: /mnt/disk4T/ly/BEAT2/beat_english_v2.0.0/smplxflame_30/2_scott_0_1_1.npz
+      audio_path: /mnt/disk4T/ly/BEAT2/beat_english_v2.0.0/wave16k/2_scott_0_1_1.wav
+      rotation_method: axisangle
+      local: false
+  train_sampler:
+    target: torch.utils.data.distributed.DistributedSampler
+    params:
+      drop_last: false
+      shuffle: true
+  validation_sampler:
+    target: torch.utils.data.distributed.DistributedSampler
+    params:
+      drop_last: false
+      shuffle: false
+  test_sampler:
+    target: torch.utils.data.distributed.DistributedSampler
+    params:
+      drop_last: false
+      shuffle: false
+  predict_sampler:
+    target: torch.utils.data.distributed.DistributedSampler
+    params:
+      drop_last: false
+      shuffle: false
+  load_text_feat: false
+  load_vae_feat: true
+  load_audio_feat: true
+  ori_joints: beat_smplx_joints
+  train_batch_size: 72
+  validation_batch_size: 1
+  test_batch_size: 1
+  predict_batch_size: 1
+  num_workers: 8
+model:
+  model:
+    target: diffusion.model.nets.causal.causal_emage_local8.CausalEmageLocal8
+    params:
+      expression_in_channels: 100
+      hidden_size: 384
+      caption_channels: 1024
+      depth: 6
+      drop_path: 0.0
+      is_teacher_forcing: true
+      mapping_size: 768
+      inputlayer_config:
+        target: diffusion.model.nets.basic_modules.InputLayer
+        params:
+          bias: true
+          norm_type: ${model.norm1_type}
+          proj_type: linear
+          norm_eps: 1.0e-06
+      fuse_inputlayer_config:
+        target: diffusion.model.nets.basic_modules.InputLayer
+        params:
+          bias: true
+          norm_type: ${model.norm1_type}
+          proj_type: linear
+          norm_eps: 1.0e-06
+      timestep_embedder_config:
+        target: diffusion.model.nets.basic_modules.MPFourierTimeEmbedding
+        params:
+          num_embedding_channels: 768
+          bias: true
+      caption_embedder_config:
+        target: diffusion.model.nets.basic_modules.CaptionEmbedder
+        params:
+          y_proj_type: mlp
+          act_type: gelu
+          y_norm_type: ${model.norm1_type}
+          bias: true
+          dropout: 0.0
+          norm_eps: 1.0e-06
+      block_config:
+        target: diffusion.model.nets.causal.causal_emage_local8.CausalEmageBlockLocal8CrossFirst
+        params:
+          num_heads: 8
+          head_dim: null
+          simple_modulation: ${model.simple_modulation}
+          bias: true
+          norm_type: ${model.norm2_type}
+          attn_type: naive
+          qk_norm_type: ${model.norm1_type}
+          ffn_type: mlp
+          ffn_act_type: gelu
+          ffn_proj_type: linear
+          ffn_mlp_ratio: 4.0
+          attn_drop: 0.0
+          attn_proj_drop: 0.0
+          ffn_drop: 0.0
+          drop_path: 0.0
+          norm_eps: 1.0e-06
+          is_teacher_forcing: ${model.model.params.is_teacher_forcing}
+          local_attn_size: ${model.local_attn_size}
+          max_attention_size: ${model.max_attention_size}
+          sink_size: ${model.sink_size}
+          cross_attn_impl_type: ${model.cross_attn_impl_type}
+          num_frame_per_block: ${train.num_frame_per_block}
+          history_frames: 8
+      finallayer_config:
+        target: diffusion.model.nets.causal.causal_block.FinalLayer
+        params:
+          bias: true
+          norm_type: ${model.norm2_type}
+          proj_type: linear
+          norm_eps: 1.0e-06
+      work_dir: ${work_dir}
+      use_pe: true
+      pos_embed_type: liger-rope
+      pe_max_length: 10000
+      simple_modulation: ${model.simple_modulation}
+      num_frame_per_block: ${train.num_frame_per_block}
+      independent_first_frame: ${train.independent_first_frame}
+      zero_history_context_enabled: false
+      zero_history_context_mode: post_encoder
+  cross_attn_type: local8
+  cross_attn_impl_type: naive
+  max_attention_size: 256
+  local_attn_size: 256
+  simple_modulation: false
+  sink_size: 0
+  norm1_type: liger-rms
+  norm2_type: rms
+  model_wrapper:
+    target: diffusion.model.denoiser.wrapper.EDMDenoiserWrapper
+    params:
+      scaling_config:
+        target: diffusion.model.denoiser.scaling.FlowEDMScaling
+        params:
+          sigma_data: 1.0
+          sigma_noise: 1.0
+          training_step: ${scheduler.train_sampling_steps}
+      return_logvar: true
+      logvar_channels: 128
+  speech_model_ckpt_path: /mnt/disk4T/ly/Sana/tools/best.pt
+  speech_model:
+    target: diffusion.model.nets.basic_modules.SimpleSpeechModel
+    params:
+      feature_dim: 512
+      output_feat_dim: 100
+      num_person: 31
+  guider:
+    guider_type: identity
+    ucg_prob: 0.0
+    cfg_audio_scale: 0.0
+    cfg_history_scale: 0.0
+    cfg_schedule_type: constant
+    cfg_schedule_kwargs: {}
+  resume_from: null
+  load_from: null
+  autocast_linear_attn: false
+  fp32_attention: true
+  mixed_precision: 'no'
+vae:
+  target: diffusion.model.vae.ae_model_zoo.IdentityAutoEncoder
+text_encoder:
+  text_encoder_name: clip-L-14
+  caption_channels: 768
+  y_norm: true
+  y_norm_scale_factor: 0.01
+  model_max_length: 77
+  weight_dtype: float32
+  local_model_path: null
+  use_last_hidden_states: true
+audio:
+  vocoder_name: hifigan
+  audio_vae:
+    target: diffusion.model.vae.ae_model_zoo.IdentityAutoEncoder
+  audio_vocoder:
+    vocoder_name: ${audio.vocoder_name}
+    local: null
+  mel_spec:
+    n_fft: 1024
+    hop_length: 256
+    win_length: 1024
+    n_mel_channels: 80
+    target_sample_rate: ${data.audio_sr}
+    mel_spec_type: ${audio.vocoder_name}
+  audio_encoder:
+    name: wavlm
+    local_model_path: /mnt/disk4T/ly/Sana/tools/wavlm-libri-clean-100h-large
+    quantization: false
+scheduler:
+  train_sampling_steps: 1000
+  schedule_type: emage
+  scheduler:
+    prediction_type: xstart
+    noise_schedule: linear_flow
+    loss_type: emage_mse
+    pred_sigma: false
+    learn_sigma: false
+    flow_shift: 1.0
+    task: ${train.task}
+    lambda_motion: 1.0
+    lambda_expression: 0.0
+    vae2_path: /remote-home/liuyi/Sana/tools/MaskedVAE2-HorizonFlip/best.pt
+    vae3_path: /remote-home/liuyi/Sana/tools/MaskedVAE3-HorizonFlip/best.pt
+    logvar_clamp_min: none
+    logvar_clamp_max: none
+    geometric_loss_logvar_mode: detach
+    other_lambdas:
+      lambda_translation: 1.0
+      lambda_rotation: 0.0
+      lambda_latent_loss: 0.0
+      lambda_vel_rcxyz: 0.0
+      lambda_acc_rcxyz: 0.0
+      lambda_rcxyz: 1.0
+      lambda_motion_prompt: 0.0
+      lambda_trans_prompt: 0.0
+      lambda_struct_loss: 1.0
+      lambda_vel_trans: 0.0
+      lambda_acc_trans: 0.0
+      lambda_block_boundary: 1.0
+      lambda_block_boundary_vel: 1.0
+      lambda_block_boundary_acc: 1.0
+      lambda_rot6d: 1.0
+    loss_weighting_config: null
+  use_trans_for_fk: true
+  overlap_length: 8
+  noise_shuffle: false
+  noise_shuffle_window: 8
+  overlap_decode:
+    enabled: false
+    overlap_frames: 8
+    blend_mode: linear
+  boundary_anchor: false
+  anchor_frames: 2
+  anchor_alpha_0: 0.3
+  anchor_rho: 0.5
+  anchor_beta_schedule: linear_decay
+  weighting_scheme: uniform
+  logit_mean: 0.0
+  logit_std: 1.0
+  monotonic_blocks: true
+  weak_monotonic_enable: false
+  weak_monotonic_mode: bounded_drop
+  weak_monotonic_strength_init: 1.0
+  weak_monotonic_strength_min: 0.3
+  weak_monotonic_strength_schedule: cosine
+  weak_monotonic_warmup_steps: 20000
+  weak_monotonic_anneal_end_steps: 200000
+  weak_monotonic_delta_max: 700
+  local_jitter_timestep:
+    enabled: false
+    distribution: uniform
+    delta_max: 0
+    delta_std: 0.0
+    anchor_first_block_to_base: false
+    allow_with_monotonic: false
+    sort_blocks: false
+  self_sampling:
+    enabled: false
+    warmup_steps: 50000
+    shift: 0.7
+    use_ema: true
+    ema_update_interval: 5
+    ema_rate: 0.999
+  block_supervision:
+    enabled: false
+    mode: uniform
+    tail_k: 1
+    head_weight: 1.0
+    tail_weight: 1.0
+    custom_weights: []
+    random_k: 1
+    random_scope: global
+    random_on_weight: 1.0
+    random_off_weight: 0.0
+    normalize: none
+  sampler:
+    target: diffusion.sampler.flow_euler_sampler.EmageFlowEulerSampler
+    params:
+      steps: 10
+      task: ${train.task}
+      prediction_type: ${scheduler.scheduler.prediction_type}
+      s_churn: 0.0
+      s_tmin: 0.1
+      s_tmax: 0.6
+      s_noise: 1.003
+train:
+  seed: 42
+  restore_rng_state: true
+  task: audio2motion
+  num_epochs: 500
+  gradient_accumulation_steps: 1
+  grad_checkpointing: false
+  gradient_clip: 1.0
+  gradient_clip_value: null
+  optimizer_constructor:
+    target: diffusion.utils.optimizer.OptimizerConstructor
+    params:
+      nonhidden_names:
+      - style_embed
+      - hand_in
+      - clean_hand_in
+      - body_in
+      - clean_body_in
+      - xhand_in
+      - xbody_in
+      - hand_fuse
+      - body_fuse
+      - hand_final_layer
+      - body_final_layer
+      - motion_t_embedder
+      - context_embedder
+      - logvar_embed
+      - logvar_pred
+      - cross_attn
+      - cross_attn2
+      optimizer_cfg: null
+      paramwise_cfg: null
+  early_stop_hours: null
+  early_stop_steps: null
+  eval: true
+  check_eval_n_epochs: 5
+  sanity_check_steps: 0
+  visualize: false
+  visualize_batch_size: 1
+  visualize_sequence_with_face: false
+  visualize_motion_with_face: false
+  visualize_obj_nums: 1
+  visualize_gt_video: false
+  visualize_adding_noise: false
+  visualize_intermediate: false
+  visualize_model_output: false
+  visualize_log_interval: 1
+  train_first_stage_model: false
+  train_audio_vae_model: false
+  load_from_optimizer: false
+  load_from_lr_scheduler: false
+  resume_lr_scheduler: true
+  lr: 0.001
+  lr_schedule: piecewise_constant
+  lr_schedule_args:
+    num_warmup_steps: 0
+    step_rules: 1:20000,0.1
+  null_embed_root: null
+  log_interval: 20
+  validation_log_interval: 5
+  test_log_interval: 5
+  debug_gradient_interval: -1
+  debug_conflict_timestep_buckets: 0
+  keep_last: false
+  keep_last_n: 3
+  keep_best_ckpt: true
+  monitor_metric: fgd
+  best_metric_mode: min
+  save_model_epochs: 10
+  save_model_steps: 100000000000
+  online_metric: false
+  eval_metric_step: 2000
+  online_metric_dir: metric_helper
+  normalize: false
+  auto_lr: null
+  use_fsdp: false
+  snr_loss: false
+  skip_step: 0
+  debug_nan: false
+  ema_update: false
+  ema_rate: 0.9999
+  optimizer:
+  - target: diffusion.utils.optimizers.torchmuon.Muon
+    params:
+      lr: ${train.lr}
+      momentum: 0.95
+      adjust_lr_fn: match_rms_adamw
+      weight_decay: 0.01
+  - target: torch.optim.AdamW
+    params:
+      betas:
+      - 0.9
+      - 0.999
+      lr: ${train.lr}
+      weight_decay: 0.01
+      fused: true
+  teacher_forcing: true
+  num_frame_per_block: 64
+  independent_first_frame: false
+metrics:
+  evaluator:
+    download_path: /mnt/disk4T/ly/Sana/tools/EMAGE/emage_evaltools/
+    audio_sr: ${data.audio_sr}
+    pose_fps: ${data.pose_fps}
+    fgd_feature_offload: false
+  evaluator_type: distributed

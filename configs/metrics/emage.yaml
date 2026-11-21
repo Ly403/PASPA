@@ -1,0 +1,15 @@
+evaluator:
+  download_path: /remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools/
+  evaluate_on_disk: True 
+  # 这个是为了方式爆内存的，如果是False，则会一直让采样结果驻留在内存中，确保内存足够大；
+  # 如果是True，则会在计算指标时，重新加载采样结果，会比较慢
+  keep_every_epoch: False # 这个是怕爆硬盘的，如果为True，就是保留所有epoch的采样结果，否则只保留最后一个epoch的采样结果
+  audio_sr: ${data.audio_sr}
+  pose_fps: ${data.pose_fps}
+  fad_config:
+    model_name: vggish
+    sample_rate: ${data.audio_sr}
+    use_pca: False
+    use_activation: False
+    verbose: False
+    local_load_path: null # /root/.cache/torch/hub/harritaylor_torchvggish_master/

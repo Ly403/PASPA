@@ -1,0 +1,116 @@
+model:
+  target: diffusion.model.nets.causal.causal_emage.CausalEmage
+  # Cross-attention mechanism type: "crossattn" (default), "deltanet", or "local8"
+  # This is used by CausalEmageInferencePipeline to determine KV cache structure
+  params:
+    expression_in_channels: 100
+    hidden_size: 384
+    caption_channels: 1024
+    depth: 6
+    drop_path: 0.0
+    is_teacher_forcing: True
+    mapping_size: 768
+    inputlayer_config:
+      target: diffusion.model.nets.basic_modules.InputLayer
+      params:
+        bias: true
+        norm_type: ${model.norm1_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    fuse_inputlayer_config:
+      target: diffusion.model.nets.basic_modules.InputLayer
+      params:
+        bias: true
+        norm_type: ${model.norm1_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    timestep_embedder_config:
+      target: diffusion.model.nets.basic_modules.MPFourierTimeEmbedding
+      params:
+        num_embedding_channels: 768
+        bias: true
+    caption_embedder_config:
+      target: diffusion.model.nets.basic_modules.CaptionEmbedder
+      params:
+        y_proj_type: mlp
+        act_type: gelu
+        y_norm_type: ${model.norm1_type}
+        bias: true
+        dropout: 0.0
+        norm_eps: 1e-6
+    # Use the standard full-history cross-attention block
+    block_config:
+      target: diffusion.model.nets.causal.causal_emage.CausalEmageBlock
+      params:
+        num_heads: 8
+        head_dim: null
+        simple_modulation: ${model.simple_modulation}
+        bias: true
+        norm_type: ${model.norm2_type}
+        attn_type: flash
+        qk_norm_type: ${model.norm1_type}
+        ffn_type: mlp
+        ffn_act_type: gelu
+        ffn_proj_type: linear
+        ffn_mlp_ratio: 4.0
+        attn_drop: 0.0
+        attn_proj_drop: 0.0
+        ffn_drop: 0.0
+        drop_path: 0.0
+        norm_eps: 1e-6
+        is_teacher_forcing: ${model.model.params.is_teacher_forcing}
+        local_attn_size: ${model.local_attn_size}
+        max_attention_size: ${model.max_attention_size}
+        sink_size: ${model.sink_size}
+        cross_attn_impl_type: ${model.cross_attn_impl_type}
+        num_frame_per_block: ${train.num_frame_per_block}
+    finallayer_config:
+      target: diffusion.model.nets.causal.causal_block.FinalLayer
+      params:
+        bias: true
+        norm_type: ${model.norm2_type}
+        proj_type: linear
+        norm_eps: 1e-6
+    work_dir: ${work_dir}
+    use_pe: true
+    pos_embed_type: rope
+    pe_max_length: 10000
+    simple_modulation: ${model.simple_modulation}
+    num_frame_per_block: ${train.num_frame_per_block}
+    independent_first_frame: ${train.independent_first_frame}
+    zero_history_context_enabled: false
+    zero_history_context_mode: post_encoder
+
+cross_attn_type: crossattn
+cross_attn_impl_type: flash
+max_attention_size: 256
+local_attn_size: -1
+simple_modulation: false
+sink_size: 0
+norm1_type: rms
+norm2_type: rms
+
+model_wrapper:
+  target: diffusion.model.denoiser.wrapper.DenoiserWrapper
+
+speech_model_ckpt_path: /remote-home/liuyi/Sana/tools/best.pt
+speech_model:
+  target: diffusion.model.nets.basic_modules.SimpleSpeechModel
+  params:
+    feature_dim: 512
+    output_feat_dim: 100
+    num_person: 31
+
+guider:
+  guider_type: identity
+  ucg_prob: 0.0
+  cfg_audio_scale: 0.0
+  cfg_history_scale: 0.0
+  cfg_schedule_type: constant
+  cfg_schedule_kwargs: {}
+
+resume_from: null
+load_from: null
+autocast_linear_attn: false
+fp32_attention: true
+mixed_precision: 'no'

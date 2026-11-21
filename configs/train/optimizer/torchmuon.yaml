@@ -1,0 +1,14 @@
+- target: diffusion.utils.optimizers.torchmuon.Muon
+  params:     
+    lr: ${train.lr}
+    momentum: 0.95
+    adjust_lr_fn: match_rms_adamw
+    weight_decay: 0.01
+- target: torch.optim.AdamW
+  params:
+    betas:
+        - 0.9
+        - 0.999
+    lr: ${train.lr}
+    weight_decay: 0.01
+    fused: True

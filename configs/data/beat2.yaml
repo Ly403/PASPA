@@ -1,0 +1,158 @@
+data_path: "/remote-home/share/dmb_nas2/liuyi/BEAT2/beat_english_v2.0.0"
+data_path_1: "/remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools"
+root_path: "/remote-home/liuyi/Sana"
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 64
+test_length: 64
+t_pre_encoder: "no"
+training_speakers: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+pose_fps: 30
+joints: 55
+train:
+  target: diffusion.data.datasets.beat2.beat_sep_lower.BEAT2Dataset
+  params:
+    loader_type: "train"
+    data_path: ${data.data_path}
+    data_path_1: ${data.data_path_1}
+    root_path: ${data.root_path}
+    cache_path: ".cache/"
+    stride: 20
+    pose_length: ${data.pose_length}
+    pose_fps: ${data.pose_fps}
+    audio_sr: ${data.audio_sr}
+    audio_fps: ${data.audio_fps}
+    test_length: ${data.test_length}
+    multi_length_training:
+      - 1.0
+    ori_joints: "beat_smplx_joints"
+    tar_joints: "beat_smplx_full"
+    pose_rep: "smplxflame_30"
+    word_rep: "textgrid"
+    facial_rep: "smplxflame_30"
+    audio_rep: "wave16k"
+    id_rep: "onehot"
+    emo_rep: null
+    sem_rep: null
+    audio_norm: false
+    facial_norm: false
+    pose_norm: false
+    additional_data: false
+    training_speakers: ${data.training_speakers}
+    beat_align: true
+    t_pre_encoder: ${data.t_pre_encoder}
+    new_cache: false
+    word_cache: false
+    disable_filtering: false
+    clean_first_seconds: 0
+    clean_final_seconds: 0
+    build_cache: true
+validation:
+  target: diffusion.data.datasets.beat2.beat_sep_lower.BEAT2Dataset
+  params:
+    loader_type: "val"
+    data_path: ${data.data_path}
+    data_path_1: ${data.data_path_1}
+    root_path: ${data.root_path}
+    cache_path: ".cache/"
+    stride: 20
+    pose_length: ${data.pose_length}
+    pose_fps: ${data.pose_fps}
+    audio_sr: ${data.audio_sr}
+    audio_fps: ${data.audio_fps}
+    test_length: ${data.test_length}
+    multi_length_training:
+      - 1.0
+    ori_joints: "beat_smplx_joints"
+    tar_joints: "beat_smplx_full"
+    pose_rep: "smplxflame_30"
+    word_rep: "textgrid"
+    facial_rep: "smplxflame_30"
+    audio_rep: "wave16k"
+    id_rep: "onehot"
+    emo_rep: null
+    sem_rep: null
+    audio_norm: false
+    facial_norm: false
+    pose_norm: false
+    additional_data: false
+    training_speakers: ${data.training_speakers}
+    beat_align: true
+    t_pre_encoder: ${data.t_pre_encoder}
+    new_cache: false
+    word_cache: false
+    disable_filtering: false
+    clean_first_seconds: 0
+    clean_final_seconds: 0
+    build_cache: true
+test:
+  target: diffusion.data.datasets.beat2.beat_sep_lower.BEAT2Dataset
+  params:
+    loader_type: "test"
+    data_path: ${data.data_path}
+    data_path_1: ${data.data_path_1}
+    root_path: ${data.root_path}
+    cache_path: ".cache/"
+    stride: 20
+    pose_length: ${data.pose_length}
+    pose_fps: ${data.pose_fps}
+    audio_sr: ${data.audio_sr}
+    audio_fps: ${data.audio_fps}
+    test_length: ${data.test_length}
+    multi_length_training:
+      - 1.0
+    ori_joints: "beat_smplx_joints"
+    tar_joints: "beat_smplx_full"
+    pose_rep: "smplxflame_30"
+    word_rep: "textgrid"
+    facial_rep: "smplxflame_30"
+    audio_rep: "wave16k"
+    id_rep: "onehot"
+    emo_rep: null
+    sem_rep: null
+    audio_norm: false
+    facial_norm: false
+    pose_norm: false
+    additional_data: false
+    training_speakers: ${data.training_speakers}
+    beat_align: true
+    t_pre_encoder: ${data.t_pre_encoder}
+    new_cache: false
+    word_cache: false
+    disable_filtering: false
+    clean_first_seconds: 0
+    clean_final_seconds: 0
+    build_cache: true
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+# train_sampler:
+#   params:
+#     drop_last: False
+
+# validation_sampler:
+#   params:
+#     drop_last: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: false
+# sort_dataset: false
+
+# motion config
+ori_joints: beat_smplx_joints
+
+train_batch_size: 42
+validation_batch_size: 24
+test_batch_size: 1
+num_workers: 8

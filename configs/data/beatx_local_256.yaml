@@ -1,0 +1,82 @@
+# 这些是受到create_h5.py的影响，手动填入，要和h5文件对应的配置参数一致
+audio_sr: 16000
+audio_fps: 16000
+pose_length: 256
+pose_fps: 30
+data_path_1: "/remote-home/liuyi/Sana/tools/EMAGE/emage_evaltools"
+joints: 55
+local: True
+train:
+  target: diffusion.data.datasets.beat2.BEATXDataset.H5Dataset
+  params:
+    h5_path: /remote-home/liuyi/Sana/.cache/train_seq_size_256_stride_size_20_local.h5
+    rotation_method: axisangle
+    use_symmetry_aug: false
+
+validation:
+  target: diffusion.data.datasets.beat2.BEATXDataset.H5Dataset
+  params:
+    h5_path: /remote-home/liuyi/Sana/.cache/val_seq_size_256_stride_size_20_local.h5
+    rotation_method: axisangle
+    use_symmetry_aug: false
+
+test:
+  target: diffusion.data.datasets.beat2.BEATXDataset.H5Dataset
+  params:
+    h5_path: /remote-home/liuyi/Sana/.cache/test_seq_size_256_stride_size_20_local.h5
+    rotation_method: axisangle
+    use_symmetry_aug: false
+
+# predict:
+#   target: diffusion.data.datasets.beat2.BEATXOneDataSet.OneDataSet
+#   params:
+#     smplx_data_path: /remote-home/liuyi/PhysicallyPlausibleKeyPosesGuidedGeneration/Data/2_scott_0_1_1.npz
+#     audio_path: /remote-home/liuyi/PhysicallyPlausibleKeyPosesGuidedGeneration/Data/2_scott_0_1_1.wav
+#     audio_feature_model_path: /remote-home/liuyi/Sana/tools/wavlm-libri-clean-100h-large
+#     rotation_method: axisangle
+
+train_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+validation_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+test_sampler:
+  target: torch.utils.data.distributed.DistributedSampler
+  params:
+    drop_last: False
+    shuffle: True
+
+# predict_sampler:
+#   target: torch.utils.data.distributed.DistributedSampler
+#   params:
+#     drop_last: False
+#     shuffle: False
+
+# train_sampler:
+#   params:
+#     drop_last: False
+
+# validation_sampler:
+#   params:
+#     drop_last: False
+
+load_text_feat: false
+load_vae_feat: true
+load_audio_feat: true
+# sort_dataset: false
+
+# motion config
+ori_joints: beat_smplx_joints
+
+train_batch_size: 42
+validation_batch_size: 24
+test_batch_size: 1
+predict_batch_size: 1
+num_workers: 8

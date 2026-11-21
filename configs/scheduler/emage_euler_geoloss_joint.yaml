@@ -1,0 +1,45 @@
+train_sampling_steps: 1000
+schedule_type: emage
+scheduler:
+  prediction_type: xstart
+  noise_schedule: linear_flow
+  loss_type: emage
+  pred_sigma: False
+  learn_sigma: False
+  flow_shift: 1.0
+  task: ${train.task}
+  lambda_motion: 1.0
+  lambda_expression: 0.0
+  vae2_path: /remote-home/liuyi/Sana/tools/MaskedVAE2-HorizonFlip/best.pt
+  vae3_path: /remote-home/liuyi/Sana/tools/MaskedVAE3-HorizonFlip/best.pt
+  overlap_length: ${scheduler.overlap_length}
+  # logvar 稳定性配置，用于防止训练崩溃
+  logvar_clamp_min: -10.0    # logvar 最小值，防止权重爆炸
+  logvar_clamp_max: 10.0     # logvar 最大值，防止权重消失
+  geometric_loss_logvar_mode: "full"  # 几何损失的logvar模式: "full", "detach", "none"
+  other_lambdas:
+    lambda_translation: 1.0
+    lambda_rotation: 0.001
+    lambda_latent_loss: 0.2
+    lambda_vel_rcxyz: 1.0
+    lambda_acc_rcxyz: 1.0
+    lambda_rcxyz: 1.0
+    lambda_motion_prompt: 0.1
+    lambda_trans_prompt: 0.1
+    lambda_struct_loss: 1.0
+    lambda_vel_trans: 0.0
+    lambda_acc_trans: 0.0
+
+use_trans_for_fk: True
+overlap_length: 8
+# logit-normal timestep
+weighting_scheme: logit_normal
+logit_mean: 0.0
+logit_std: 1.0
+
+sampler:
+  target: diffusion.sampler.flow_euler_sampler.EmageFlowEulerSampler
+  params:
+    steps: 10
+    task: ${train.task}
+    prediction_type: ${scheduler.scheduler.prediction_type}

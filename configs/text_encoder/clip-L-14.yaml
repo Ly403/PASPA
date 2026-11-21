@@ -1,0 +1,8 @@
+text_encoder_name: clip-L-14
+caption_channels: 768
+y_norm: true
+y_norm_scale_factor: 0.01
+model_max_length: 77
+weight_dtype: float32
+local_model_path: null
+use_last_hidden_states: True
